@@ -47,7 +47,7 @@ export const DEMO_INVOICE: InvoiceData = {
     {
       description:
         "UI/UX Design – Konzeption & Prototyping\nWireframes, Figma-Designs, Interaktionsprototyp",
-      unitLabel: "Menge",
+      unitLabel: "",
       quantity: 5,
       unitPrice: 900,
     },
