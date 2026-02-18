@@ -2,20 +2,12 @@
 
 import { InvoiceData } from "@/types/invoice";
 import { formatDate } from "@/lib/utils";
+import { translations, Locale } from "@/lib/i18n";
 
 interface Props {
   data: InvoiceData;
+  locale: Locale;
 }
-
-const LABEL: Record<InvoiceData["docType"], string> = {
-  INVOICE: "RECHNUNG",
-  QUOTE: "ANGEBOT",
-};
-
-const TERMS_LABEL: Record<InvoiceData["docType"], string> = {
-  INVOICE: "Zahlungsziel",
-  QUOTE: "Gültig bis",
-};
 
 function ContactRow({ label, value }: { label: string; value: string }) {
   return (
@@ -26,7 +18,8 @@ function ContactRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-export function InvoiceHeader({ data }: Props) {
+export function InvoiceHeader({ data, locale }: Props) {
+  const t = translations[locale];
   const {
     docType,
     docNumber,
@@ -37,6 +30,13 @@ export function InvoiceHeader({ data }: Props) {
     recipient,
   } = data;
 
+  const docTitle = docType === "INVOICE" ? t.invoiceTitle : t.quoteTitle;
+  const numberLabel = docType === "INVOICE" ? t.invoiceNr : t.quoteNr;
+  const termsLabel =
+    docType === "INVOICE" ? t.paymentTermsLabel : t.validUntilLabel;
+  const termsValue =
+    docType === "QUOTE" ? formatDate(paymentTerms ?? "") : (paymentTerms ?? "");
+
   return (
     <header className="invoice-header">
       <div className="accent-bar" />
@@ -44,7 +44,7 @@ export function InvoiceHeader({ data }: Props) {
 
       <div className="header-grid">
         <div className="col-doctype">
-          <h1 className="doc-title">{LABEL[docType]}</h1>
+          <h1 className="doc-title">{docTitle}</h1>
         </div>
 
         <div className="col-recipient">
@@ -62,30 +62,24 @@ export function InvoiceHeader({ data }: Props) {
           <div className="meta-list">
             {recipient.customerNumber && (
               <div className="meta-row">
-                <span className="meta-label">Kundennr.:</span>
+                <span className="meta-label">{t.customerNr}</span>
                 <span className="meta-value">{recipient.customerNumber}</span>
               </div>
             )}
             {period && (
               <div className="meta-row">
-                <span className="meta-label">Zeitraum:</span>
+                <span className="meta-label">{t.periodLabel}</span>
                 <span className="meta-value">{period}</span>
               </div>
             )}
             <div className="meta-row">
-              <span className="meta-label">
-                {docType === "INVOICE" ? "Rechnungsnr.:" : "Angebotsnr.:"}
-              </span>
+              <span className="meta-label">{numberLabel}</span>
               <span className="meta-value">{docNumber}</span>
             </div>
             {paymentTerms && (
               <div className="meta-row">
-                <span className="meta-label">{TERMS_LABEL[docType]}:</span>
-                <span className="meta-value">
-                  {docType === "QUOTE"
-                    ? formatDate(paymentTerms)
-                    : paymentTerms}
-                </span>
+                <span className="meta-label">{termsLabel}</span>
+                <span className="meta-value">{termsValue}</span>
               </div>
             )}
           </div>
@@ -103,14 +97,16 @@ export function InvoiceHeader({ data }: Props) {
           </div>
 
           <div className="contact-list">
-            {sender.phone && <ContactRow label="Tel.:" value={sender.phone} />}
+            {sender.phone && (
+              <ContactRow label={t.telLabel} value={sender.phone} />
+            )}
             {sender.email && (
-              <ContactRow label="E-Mail:" value={sender.email} />
+              <ContactRow label={t.emailLabel} value={sender.email} />
             )}
             {sender.website && (
-              <ContactRow label="Web:" value={sender.website} />
+              <ContactRow label={t.webLabel} value={sender.website} />
             )}
-            <ContactRow label="Datum:" value={formatDate(issueDate)} />
+            <ContactRow label={t.dateLabel} value={formatDate(issueDate)} />
           </div>
         </div>
       </div>

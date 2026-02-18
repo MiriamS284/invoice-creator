@@ -1,70 +1,60 @@
 "use client";
 
-// ─────────────────────────────────────────────
-//  InvoiceFooter
-//  Bank details, legal notice, custom notes.
-// ─────────────────────────────────────────────
-
 import { InvoiceData } from "@/types/invoice";
+import { translations, Locale } from "@/lib/i18n";
 
 interface Props {
   data: InvoiceData;
+  locale: Locale;
 }
 
-export function InvoiceFooter({ data }: Props) {
+export function InvoiceFooter({ data, locale }: Props) {
+  const t = translations[locale];
   const { sender, notes, smallBusinessNote } = data;
   const hasBank = sender.iban || sender.bic || sender.bankOwner;
 
   return (
     <footer className="invoice-footer">
-      {/* Notes / personal closing */}
-      {notes && (
-        <p className="invoice-notes whitespace-pre-line">{notes}</p>
-      )}
+      {notes && <p className="invoice-notes whitespace-pre-line">{notes}</p>}
 
       <div className="footer-divider" />
 
-      {/* Bank details */}
       {hasBank && (
         <dl className="bank-details">
           {sender.bankOwner && (
             <>
-              <dt>Kontoinhaber:</dt>
+              <dt>{t.accountOwner}</dt>
               <dd>{sender.bankOwner}</dd>
             </>
           )}
           {sender.iban && (
             <>
-              <dt>IBAN:</dt>
+              <dt>{t.ibanLabel}</dt>
               <dd>{sender.iban}</dd>
             </>
           )}
           {sender.bic && (
             <>
-              <dt>BIC:</dt>
+              <dt>{t.bicLabel}</dt>
               <dd>{sender.bic}</dd>
             </>
           )}
           {sender.bankName && (
             <>
-              <dt>Bank:</dt>
+              <dt>{t.bankLabel}</dt>
               <dd>{sender.bankName}</dd>
             </>
           )}
         </dl>
       )}
 
-      {/* Legal notices */}
       <div className="legal-notes">
         {sender.taxId && (
-          <p>Steuernummer / USt-IdNr.: {sender.taxId}</p>
-        )}
-        {smallBusinessNote && (
           <p>
-            Gemäß §19 UStG (Kleinunternehmerregelung) wird keine Umsatzsteuer
-            ausgewiesen.
+            {t.taxIdLabel} {sender.taxId}
           </p>
         )}
+        {smallBusinessNote && <p>{t.taxNote}</p>}
       </div>
     </footer>
   );

@@ -45,14 +45,16 @@ export const DEMO_INVOICE: InvoiceData = {
 
   lineItems: [
     {
-      description: "UI/UX Design – Konzeption & Prototyping\nWireframes, Figma-Designs, Interaktionsprototyp",
-      unitLabel: "Tage",
+      description:
+        "UI/UX Design – Konzeption & Prototyping\nWireframes, Figma-Designs, Interaktionsprototyp",
+      unitLabel: "Menge",
       quantity: 5,
       unitPrice: 900,
     },
     {
-      description: "Frontend-Entwicklung (React / Next.js)\nKomponentenbibliothek, responsive Layout, Animationen",
-      unitLabel: "Tage",
+      description:
+        "Frontend-Entwicklung (React / Next.js)\nKomponentenbibliothek, responsive Layout, Animationen",
+      unitLabel: "Menge",
       quantity: 8,
       unitPrice: 950,
     },
@@ -74,7 +76,7 @@ export const DEMO_QUOTE: InvoiceData = {
   ...DEMO_INVOICE,
   docType: "QUOTE",
   docNumber: "QUOT-2025-0011",
-  paymentTerms: addDays(today, 14), // valid until
+  paymentTerms: addDays(today, 14),
   notes:
     "Ich freue mich auf eine erfolgreiche Zusammenarbeit!\n\nMit freundlichen Grüßen\nAlex Studio GmbH",
 };

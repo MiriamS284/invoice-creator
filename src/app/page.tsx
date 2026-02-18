@@ -1,22 +1,13 @@
 "use client";
 
-// ─────────────────────────────────────────────
-//  Invoice Generator Page
-//  Left: interactive editor form
-//  Right: live A4 preview
-//  Bottom: Print / PDF action button
-// ─────────────────────────────────────────────
-
 import { useState, useCallback } from "react";
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+import html2canvas from "html2canvas";
 import { InvoiceDocument } from "@/components/invoice";
 import { InvoiceData, LineItem, DocumentType } from "@/types/invoice";
 import { DEMO_INVOICE, DEMO_QUOTE } from "@/lib/demoData";
-import {
-  computeLineItems,
-  computeSubtotal,
-  formatCurrency,
-  todayISO,
-} from "@/lib/utils";
+import { computeLineItems, computeSubtotal, formatCurrency } from "@/lib/utils";
+import { Locale, translations } from "@/lib/i18n";
 
 // ── Tiny helpers ──────────────────────────────
 
@@ -41,7 +32,7 @@ function SectionHeading({ title }: { title: string }) {
   return <h3 className="section-heading">{title}</h3>;
 }
 
-// ── Line Item Row ────────────────────────────
+// ── Line Item Row ─────────────────────────────
 
 function LineItemRow({
   item,
@@ -49,6 +40,7 @@ function LineItemRow({
   onChange,
   onRemove,
   canRemove,
+  unitLabelPlaceholder,
 }: {
   item: LineItem;
   index: number;
@@ -59,6 +51,7 @@ function LineItemRow({
   ) => void;
   onRemove: (index: number) => void;
   canRemove: boolean;
+  unitLabelPlaceholder: string;
 }) {
   const total = item.quantity * item.unitPrice;
 
@@ -70,6 +63,13 @@ function LineItemRow({
         placeholder="Leistungsbeschreibung…"
         value={item.description}
         onChange={(e) => onChange(index, "description", e.target.value)}
+      />
+      <input
+        className="input line-unit"
+        type="text"
+        placeholder={unitLabelPlaceholder}
+        value={item.unitLabel ?? ""}
+        onChange={(e) => onChange(index, "unitLabel", e.target.value)}
       />
       <input
         className="input line-qty"
@@ -111,6 +111,10 @@ function LineItemRow({
 
 export default function InvoiceGeneratorPage() {
   const [data, setData] = useState<InvoiceData>(DEMO_INVOICE);
+  const [locale, setLocale] = useState<Locale>("de");
+  const [pngLoading, setPngLoading] = useState(false);
+
+  const t = translations[locale];
 
   // ── Generic updaters ──────────────────────
 
@@ -149,12 +153,12 @@ export default function InvoiceGeneratorPage() {
 
   const updateLineItem = useCallback(
     (index: number, field: keyof LineItem, value: string | number) => {
-      setData((prev) => {
-        const updated = prev.lineItems.map((item, i) =>
+      setData((prev) => ({
+        ...prev,
+        lineItems: prev.lineItems.map((item, i) =>
           i === index ? { ...item, [field]: value } : item,
-        );
-        return { ...prev, lineItems: updated };
-      });
+        ),
+      }));
     },
     [],
   );
@@ -164,7 +168,12 @@ export default function InvoiceGeneratorPage() {
       ...prev,
       lineItems: [
         ...prev.lineItems,
-        { description: "", unitLabel: "Std.", quantity: 1, unitPrice: 0 },
+        {
+          description: "",
+          unitLabel: prev.lineItems[0]?.unitLabel ?? "Std.",
+          quantity: 1,
+          unitPrice: 0,
+        },
       ],
     }));
   }, []);
@@ -176,21 +185,33 @@ export default function InvoiceGeneratorPage() {
     }));
   }, []);
 
-  // ── Doc type toggle ───────────────────────
-
   const switchDocType = (type: DocumentType) => {
-    if (type === "QUOTE") {
-      setData({ ...DEMO_QUOTE });
-    } else {
-      setData({ ...DEMO_INVOICE });
-    }
+    setData(type === "QUOTE" ? { ...DEMO_QUOTE } : { ...DEMO_INVOICE });
   };
-
-  // ── Print / PDF ───────────────────────────
 
   const handlePrint = () => window.print();
 
-  // ── Derived totals for editor summary ────
+  const handleDownloadPng = async () => {
+    const element = document.getElementById("invoice-document");
+    if (!element) return;
+    setPngLoading(true);
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const canvas = await (html2canvas as any)(element, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: "#ffffff",
+        logging: false,
+      });
+      const link = document.createElement("a");
+      link.download = `${data.docNumber || "rechnung"}.png`;
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+    } finally {
+      setPngLoading(false);
+    }
+  };
 
   const enriched = computeLineItems(data.lineItems);
   const subtotal = computeSubtotal(enriched);
@@ -199,7 +220,6 @@ export default function InvoiceGeneratorPage() {
 
   return (
     <div className="page-root">
-      {/* ── Top Bar ── */}
       <header className="topbar">
         <div className="topbar-inner">
           <div className="topbar-brand">
@@ -207,6 +227,7 @@ export default function InvoiceGeneratorPage() {
             <span className="topbar-title">Invoice Generator</span>
           </div>
 
+          {/* Doc type tabs */}
           <div className="doctype-tabs">
             {(["INVOICE", "QUOTE"] as DocumentType[]).map((type) => (
               <button
@@ -215,31 +236,49 @@ export default function InvoiceGeneratorPage() {
                 className={`tab-btn${data.docType === type ? " tab-btn--active" : ""}`}
                 onClick={() => switchDocType(type)}
               >
-                {type === "INVOICE" ? "Rechnung" : "Angebot"}
+                {type === "INVOICE" ? t.invoice : t.quote}
               </button>
             ))}
           </div>
 
+          {/* Language switcher */}
+          <div className="lang-tabs">
+            {(["de", "en"] as Locale[]).map((l) => (
+              <button
+                key={l}
+                type="button"
+                className={`lang-btn${locale === l ? " lang-btn--active" : ""}`}
+                onClick={() => setLocale(l)}
+              >
+                {l.toUpperCase()}
+              </button>
+            ))}
+          </div>
+
+          <button
+            type="button"
+            className="btn-png"
+            onClick={handleDownloadPng}
+            disabled={pngLoading}
+          >
+            <span>⬇</span> {pngLoading ? t.loading : t.downloadPng}
+          </button>
+
           <button type="button" className="btn-print" onClick={handlePrint}>
-            <span className="btn-print-icon">⬡</span> PDF / Drucken
+            <span className="btn-print-icon">⬡</span> {t.printPdf}
           </button>
         </div>
       </header>
 
       <div className="main-layout">
-        {/* ═══════════════════════════════════
-            LEFT – Editor
-        ═══════════════════════════════════ */}
+        {/* ── LEFT – Editor ── */}
         <aside className="editor-panel no-print">
           <div className="editor-scroll">
-            {/* Document Meta */}
-            <SectionHeading title="Dokument" />
+            <SectionHeading title={t.sectionDocument} />
             <div className="field-grid">
               <Field
                 label={
-                  data.docType === "INVOICE"
-                    ? "Rechnungsnummer"
-                    : "Angebotsnummer"
+                  data.docType === "INVOICE" ? t.invoiceNumber : t.quoteNumber
                 }
               >
                 <input
@@ -248,7 +287,7 @@ export default function InvoiceGeneratorPage() {
                   onChange={(e) => set("docNumber", e.target.value)}
                 />
               </Field>
-              <Field label="Datum">
+              <Field label={t.date}>
                 <input
                   className="input"
                   type="date"
@@ -258,7 +297,7 @@ export default function InvoiceGeneratorPage() {
               </Field>
               <Field
                 label={
-                  data.docType === "INVOICE" ? "Zahlungsziel" : "Gültig bis"
+                  data.docType === "INVOICE" ? t.paymentTerms : t.validUntil
                 }
                 span2
               >
@@ -267,68 +306,67 @@ export default function InvoiceGeneratorPage() {
                   value={data.paymentTerms ?? ""}
                   placeholder={
                     data.docType === "INVOICE"
-                      ? "z.B. 14 Tage netto"
+                      ? t.paymentPlaceholder
                       : "YYYY-MM-DD"
                   }
                   onChange={(e) => set("paymentTerms", e.target.value)}
                 />
               </Field>
-              <Field label="Leistungszeitraum" span2>
+              <Field label={t.period} span2>
                 <input
                   className="input"
                   value={data.period ?? ""}
-                  placeholder="01.01.2025 – 31.01.2025"
+                  placeholder={t.periodPlaceholder}
                   onChange={(e) => set("period", e.target.value)}
                 />
               </Field>
             </div>
 
-            {/* Sender */}
-            <SectionHeading title="Absender (Du)" />
+            <SectionHeading title={t.sectionSender} />
             <div className="field-grid">
-              <Field label="Name / Firma" span2>
+              <Field label={t.nameCompany} span2>
                 <input
                   className="input"
                   value={data.sender.name}
                   onChange={(e) => setSender("name", e.target.value)}
                 />
               </Field>
-              <Field label="Straße">
+              <Field label={t.street}>
                 <input
                   className="input"
                   value={data.sender.street}
                   onChange={(e) => setSender("street", e.target.value)}
                 />
               </Field>
-              <Field label="Hausnr.">
+              <Field label={t.houseNumber}>
                 <input
                   className="input"
                   value={data.sender.houseNumber}
                   onChange={(e) => setSender("houseNumber", e.target.value)}
                 />
               </Field>
-              <Field label="PLZ">
+              <Field label={t.postalCode}>
                 <input
                   className="input"
                   value={data.sender.postalCode}
                   onChange={(e) => setSender("postalCode", e.target.value)}
                 />
               </Field>
-              <Field label="Ort">
+              <Field label={t.city}>
                 <input
                   className="input"
                   value={data.sender.city}
                   onChange={(e) => setSender("city", e.target.value)}
                 />
               </Field>
-              <Field label="Telefon">
+              <Field label={t.phone}>
                 <input
                   className="input"
                   value={data.sender.phone ?? ""}
                   onChange={(e) => setSender("phone", e.target.value)}
                 />
               </Field>
-              <Field label="E-Mail">
+              <Field label={t.email}>
                 <input
                   className="input"
                   type="email"
@@ -336,14 +374,14 @@ export default function InvoiceGeneratorPage() {
                   onChange={(e) => setSender("email", e.target.value)}
                 />
               </Field>
-              <Field label="Website">
+              <Field label={t.website}>
                 <input
                   className="input"
                   value={data.sender.website ?? ""}
                   onChange={(e) => setSender("website", e.target.value)}
                 />
               </Field>
-              <Field label="Steuer-Nr. / USt-Id">
+              <Field label={t.taxId}>
                 <input
                   className="input"
                   value={data.sender.taxId ?? ""}
@@ -352,31 +390,30 @@ export default function InvoiceGeneratorPage() {
               </Field>
             </div>
 
-            {/* Bank */}
-            <SectionHeading title="Bankverbindung" />
+            <SectionHeading title={t.sectionBank} />
             <div className="field-grid">
-              <Field label="Kontoinhaber" span2>
+              <Field label={t.bankOwner} span2>
                 <input
                   className="input"
                   value={data.sender.bankOwner ?? ""}
                   onChange={(e) => setSender("bankOwner", e.target.value)}
                 />
               </Field>
-              <Field label="IBAN" span2>
+              <Field label={t.iban} span2>
                 <input
                   className="input"
                   value={data.sender.iban ?? ""}
                   onChange={(e) => setSender("iban", e.target.value)}
                 />
               </Field>
-              <Field label="BIC">
+              <Field label={t.bic}>
                 <input
                   className="input"
                   value={data.sender.bic ?? ""}
                   onChange={(e) => setSender("bic", e.target.value)}
                 />
               </Field>
-              <Field label="Bank">
+              <Field label={t.bank}>
                 <input
                   className="input"
                   value={data.sender.bankName ?? ""}
@@ -385,45 +422,44 @@ export default function InvoiceGeneratorPage() {
               </Field>
             </div>
 
-            {/* Recipient */}
-            <SectionHeading title="Empfänger (Kunde)" />
+            <SectionHeading title={t.sectionRecipient} />
             <div className="field-grid">
-              <Field label="Name / Firma" span2>
+              <Field label={t.nameCompany} span2>
                 <input
                   className="input"
                   value={data.recipient.name}
                   onChange={(e) => setRecipient("name", e.target.value)}
                 />
               </Field>
-              <Field label="Straße">
+              <Field label={t.street}>
                 <input
                   className="input"
                   value={data.recipient.street}
                   onChange={(e) => setRecipient("street", e.target.value)}
                 />
               </Field>
-              <Field label="Hausnr.">
+              <Field label={t.houseNumber}>
                 <input
                   className="input"
                   value={data.recipient.houseNumber}
                   onChange={(e) => setRecipient("houseNumber", e.target.value)}
                 />
               </Field>
-              <Field label="PLZ">
+              <Field label={t.postalCode}>
                 <input
                   className="input"
                   value={data.recipient.postalCode}
                   onChange={(e) => setRecipient("postalCode", e.target.value)}
                 />
               </Field>
-              <Field label="Ort">
+              <Field label={t.city}>
                 <input
                   className="input"
                   value={data.recipient.city}
                   onChange={(e) => setRecipient("city", e.target.value)}
                 />
               </Field>
-              <Field label="E-Mail">
+              <Field label={t.email}>
                 <input
                   className="input"
                   type="email"
@@ -431,7 +467,7 @@ export default function InvoiceGeneratorPage() {
                   onChange={(e) => setRecipient("email", e.target.value)}
                 />
               </Field>
-              <Field label="Kundennummer">
+              <Field label={t.customerNumber}>
                 <input
                   className="input"
                   value={data.recipient.customerNumber ?? ""}
@@ -442,13 +478,13 @@ export default function InvoiceGeneratorPage() {
               </Field>
             </div>
 
-            {/* Line Items */}
-            <SectionHeading title="Positionen" />
+            <SectionHeading title={t.sectionItems} />
             <div className="line-items-header">
-              <span className="li-col-desc">Beschreibung</span>
-              <span className="li-col-qty">Menge</span>
-              <span className="li-col-price">Preis</span>
-              <span className="li-col-total">Gesamt</span>
+              <span className="li-col-desc">{t.description}</span>
+              <span className="li-col-unit">{t.unitLabel}</span>
+              <span className="li-col-qty">{t.quantity}</span>
+              <span className="li-col-price">{t.unitPrice}</span>
+              <span className="li-col-total">{t.total}</span>
               <span className="li-col-action" />
             </div>
 
@@ -460,6 +496,7 @@ export default function InvoiceGeneratorPage() {
                 onChange={updateLineItem}
                 onRemove={removeLineItem}
                 canRemove={data.lineItems.length > 1}
+                unitLabelPlaceholder={t.unitLabelPlaceholder}
               />
             ))}
 
@@ -468,12 +505,11 @@ export default function InvoiceGeneratorPage() {
               className="btn-add-line"
               onClick={addLineItem}
             >
-              + Position hinzufügen
+              {t.addItem}
             </button>
 
-            {/* Optional discount */}
             <div className="field-grid" style={{ marginTop: "12px" }}>
-              <Field label="Rabattbetrag (€)">
+              <Field label={t.discountAmount}>
                 <input
                   className="input"
                   type="number"
@@ -486,42 +522,40 @@ export default function InvoiceGeneratorPage() {
                   }
                 />
               </Field>
-              <Field label="Rabattbezeichnung">
+              <Field label={t.discountLabel}>
                 <input
                   className="input"
                   value={data.discountLabel ?? ""}
-                  placeholder="z.B. Treuerabatt"
+                  placeholder={t.discountPlaceholder}
                   onChange={(e) => set("discountLabel", e.target.value)}
                 />
               </Field>
             </div>
 
-            {/* Totals summary */}
             <div className="totals-summary">
               <div className="totals-row">
-                <span>Zwischensumme</span>
+                <span>{t.subtotal}</span>
                 <span>{formatCurrency(subtotal)}</span>
               </div>
               {discount > 0 && (
                 <div className="totals-row totals-discount">
-                  <span>Rabatt</span>
+                  <span>{t.discount}</span>
                   <span>−{formatCurrency(discount)}</span>
                 </div>
               )}
               <div className="totals-row totals-total">
-                <span>Gesamtbetrag</span>
+                <span>{t.grandTotal}</span>
                 <span>{formatCurrency(total)}</span>
               </div>
             </div>
 
-            {/* Notes */}
-            <SectionHeading title="Notizen / Abschluss" />
+            <SectionHeading title={t.sectionNotes} />
             <Field label="" span2>
               <textarea
                 className="input"
                 rows={4}
                 value={data.notes ?? ""}
-                placeholder="Abschlusstext, persönliche Nachricht…"
+                placeholder={t.notesPlaceholder}
                 onChange={(e) => set("notes", e.target.value)}
               />
             </Field>
@@ -532,18 +566,16 @@ export default function InvoiceGeneratorPage() {
                 checked={data.smallBusinessNote ?? false}
                 onChange={(e) => set("smallBusinessNote", e.target.checked)}
               />
-              §19 UStG Kleinunternehmer-Hinweis anzeigen
+              {t.smallBusinessNote}
             </label>
           </div>
         </aside>
 
-        {/* ═══════════════════════════════════
-            RIGHT – A4 Live Preview
-        ═══════════════════════════════════ */}
+        {/* ── RIGHT – A4 Live Preview ── */}
         <main className="preview-panel">
           <div className="preview-scroll">
             <div className="a4-sheet">
-              <InvoiceDocument data={data} />
+              <InvoiceDocument data={data} locale={locale} />
             </div>
           </div>
         </main>
