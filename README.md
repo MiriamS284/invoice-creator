@@ -2,11 +2,11 @@
 
 > A clean, reusable **invoice & quote generator** built with **Next.js 15 App Router** + **TypeScript**. Live preview, print-to-PDF, no backend required.
 
-![Preview](./preview.png)
+![Preview](./public/screenshot_main.jpg)
 
 ---
 
-## ✨ Features
+## Features
 
 - **Invoice & Quote** modes with one-click toggle
 - **Live editor** – changes appear instantly in the A4 preview
@@ -17,7 +17,7 @@
 - **Bank details** + §19 UStG Kleinunternehmer notice (optional)
 - **A4 preview** pixel-accurate, screen and print
 - 🇩🇪 German locale formatting (easily adaptable) & ENG English locale formatting
-- 💯 **Zero runtime dependencies** beyond Next.js + React
+- **Zero runtime dependencies** beyond Next.js + React
 
 ---
 
