@@ -1,36 +1,167 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ⬛ Invoice Generator
 
-## Getting Started
+> A clean, reusable **invoice & quote generator** built with **Next.js 15 App Router** + **TypeScript**. Live preview, print-to-PDF, no backend required.
 
-First, run the development server:
+![Preview](./preview.png)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+---
+
+## ✨ Features
+
+- 📄 **Invoice & Quote** modes with one-click toggle
+- ✏️ **Live editor** – changes appear instantly in the A4 preview
+- 🖨️ **Print / PDF** via native browser print dialog (no external lib)
+- 🔢 **Dynamic line items** – add, remove, auto-calculate totals
+- 💸 **Optional discount** with custom label
+- 🏦 **Bank details** + §19 UStG Kleinunternehmer notice (optional)
+- 📐 **A4 preview** pixel-accurate, screen and print
+- 🇩🇪 German locale formatting (easily adaptable)
+- 💯 **Zero runtime dependencies** beyond Next.js + React
+
+---
+
+## 🗂 Project Structure
+
+```
+src/
+├── app/
+│   ├── globals.css          # Full design system (CSS variables, layout, print)
+│   ├── layout.tsx           # Root layout with metadata
+│   └── page.tsx             # Main page: editor + live preview
+│
+├── components/
+│   └── invoice/
+│       ├── index.ts              # Barrel export
+│       ├── InvoiceDocument.tsx   # Composite root component
+│       ├── InvoiceHeader.tsx     # Sender / recipient / doc meta
+│       ├── InvoiceTable.tsx      # Line items + totals
+│       └── InvoiceFooter.tsx     # Bank details, legal notes, closing
+│
+├── lib/
+│   ├── demoData.ts          # DEMO_INVOICE / DEMO_QUOTE dummy data
+│   └── utils.ts             # Pure helper functions (formatting, math)
+│
+└── types/
+    └── invoice.ts           # All TypeScript interfaces
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🚀 Quick Start
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Prerequisites
 
-## Learn More
+- Node.js ≥ 18
+- npm / yarn / pnpm
 
-To learn more about Next.js, take a look at the following resources:
+### Install & Run
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+git clone https://github.com/YOUR_USERNAME/invoice-generator.git
+cd invoice-generator
+npm install
+npm run dev
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Open [http://localhost:3000](http://localhost:3000).
 
-## Deploy on Vercel
+### Deploy to Vercel
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+npm install -g vercel
+vercel
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Or connect your GitHub repo directly at [vercel.com/new](https://vercel.com/new).
+
+---
+
+## 🔧 How to Use as a Component
+
+The `InvoiceDocument` component is fully self-contained and reusable:
+
+```tsx
+import { InvoiceDocument } from "@/components/invoice";
+import { InvoiceData } from "@/types/invoice";
+
+const myData: InvoiceData = {
+  docType: "INVOICE",
+  docNumber: "INV-2025-0001",
+  issueDate: "2025-03-15",
+  paymentTerms: "14 Tage netto",
+  sender: {
+    name: "Your Company",
+    street: "Main Street",
+    houseNumber: "1",
+    postalCode: "10115",
+    city: "Berlin",
+    email: "hello@yourcompany.com",
+    iban: "DE89 ...",
+    taxId: "DE123456789",
+  },
+  recipient: {
+    name: "Client GmbH",
+    street: "Client Road",
+    houseNumber: "42",
+    postalCode: "20095",
+    city: "Hamburg",
+  },
+  lineItems: [
+    {
+      description: "Web Development",
+      unitLabel: "Tage",
+      quantity: 5,
+      unitPrice: 900,
+    },
+  ],
+};
+
+export default function MyPage() {
+  return <InvoiceDocument data={myData} />;
+}
+```
+
+---
+
+## 📦 Dependencies
+
+| Package      | Version | Purpose                  |
+| ------------ | ------- | ------------------------ |
+| `next`       | ^14.2.0 | App Router, SSR, routing |
+| `react`      | ^18.3.0 | UI rendering             |
+| `react-dom`  | ^18.3.0 | DOM rendering            |
+| `typescript` | ^5.4.0  | Type safety (dev only)   |
+
+> **No additional runtime dependencies.** Formatting is handled by the native `Intl` API.
+
+---
+
+## 🎨 Design System
+
+The design uses **CSS Variables** and **DM Mono + DM Serif Display** (Google Fonts). The palette is a refined editorial monochrome:
+
+| Variable      | Value     | Usage               |
+| ------------- | --------- | ------------------- |
+| `--c-accent`  | `#2a6ca8` | Accent / table head |
+| `--c-panel`   | `#1a1a1a` | Editor sidebar      |
+| `--c-bg`      | `#f5f4f0` | Page background     |
+| `--c-surface` | `#ffffff` | A4 sheet            |
+
+---
+
+## 🔒 Adapting for Production
+
+1. **Replace `DEMO_INVOICE`** in `src/lib/demoData.ts` with your real data source (API, DB, etc.)
+2. **Add authentication** if invoices are user-specific
+3. **Connect to a backend** (e.g. Supabase) to persist documents
+4. **Extend `InvoiceData`** type for VAT, custom fields, etc.
+
+---
+
+## 📄 License
+
+MIT — free to use, modify, and distribute.
+
+---
+
+Made with ♥ using Next.js + TypeScript
