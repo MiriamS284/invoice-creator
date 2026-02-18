@@ -8,14 +8,15 @@
 
 ## ✨ Features
 
-- 📄 **Invoice & Quote** modes with one-click toggle
-- ✏️ **Live editor** – changes appear instantly in the A4 preview
-- 🖨️ **Print / PDF** via native browser print dialog (no external lib)
-- 🔢 **Dynamic line items** – add, remove, auto-calculate totals
-- 💸 **Optional discount** with custom label
-- 🏦 **Bank details** + §19 UStG Kleinunternehmer notice (optional)
-- 📐 **A4 preview** pixel-accurate, screen and print
-- 🇩🇪 German locale formatting (easily adaptable)
+- **Invoice & Quote** modes with one-click toggle
+- **Live editor** – changes appear instantly in the A4 preview
+- **Print / PDF** via native browser print dialog (no external lib)
+- **Print / PNG** via native browser print dialog (no external lib)
+- **Dynamic line items** – add, remove, auto-calculate totals
+- **Optional discount** with custom label
+- **Bank details** + §19 UStG Kleinunternehmer notice (optional)
+- **A4 preview** pixel-accurate, screen and print
+- 🇩🇪 German locale formatting (easily adaptable) & ENG English locale formatting
 - 💯 **Zero runtime dependencies** beyond Next.js + React
 
 ---
@@ -47,7 +48,7 @@ src/
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
