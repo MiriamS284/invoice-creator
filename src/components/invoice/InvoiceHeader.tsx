@@ -1,11 +1,5 @@
 "use client";
 
-// ─────────────────────────────────────────────
-//  InvoiceHeader
-//  Renders the top section: branding bar, sender,
-//  recipient address block and document meta.
-// ─────────────────────────────────────────────
-
 import { InvoiceData } from "@/types/invoice";
 import { formatDate } from "@/lib/utils";
 
@@ -23,89 +17,101 @@ const TERMS_LABEL: Record<InvoiceData["docType"], string> = {
   QUOTE: "Gültig bis",
 };
 
+function ContactRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="contact-row">
+      <span className="contact-label">{label}</span>
+      <span className="contact-value">{value}</span>
+    </div>
+  );
+}
+
 export function InvoiceHeader({ data }: Props) {
-  const { docType, docNumber, issueDate, paymentTerms, period, sender, recipient } = data;
+  const {
+    docType,
+    docNumber,
+    issueDate,
+    paymentTerms,
+    period,
+    sender,
+    recipient,
+  } = data;
 
   return (
     <header className="invoice-header">
-      {/* Top accent bar */}
       <div className="accent-bar" />
       <p className="brand-line">{sender.name}</p>
 
-      {/* Three-column meta block */}
       <div className="header-grid">
-        {/* Col 1 – Document type */}
         <div className="col-doctype">
           <h1 className="doc-title">{LABEL[docType]}</h1>
         </div>
 
-        {/* Col 2 – Recipient + document numbers */}
         <div className="col-recipient">
-          <address>
-            <strong>{recipient.name}</strong>
-            <br />
-            {recipient.street} {recipient.houseNumber}
-            <br />
-            {recipient.postalCode} {recipient.city}
-            {recipient.country ? <>, {recipient.country}</> : null}
-          </address>
+          <div className="address-block">
+            <span className="address-name">{recipient.name}</span>
+            <span>
+              {recipient.street} {recipient.houseNumber}
+            </span>
+            <span>
+              {recipient.postalCode} {recipient.city}
+              {recipient.country ? `, ${recipient.country}` : ""}
+            </span>
+          </div>
 
-          <dl className="meta-list">
+          <div className="meta-list">
             {recipient.customerNumber && (
-              <>
-                <dt>Kundennr.:</dt>
-                <dd>{recipient.customerNumber}</dd>
-              </>
+              <div className="meta-row">
+                <span className="meta-label">Kundennr.:</span>
+                <span className="meta-value">{recipient.customerNumber}</span>
+              </div>
             )}
             {period && (
-              <>
-                <dt>Zeitraum:</dt>
-                <dd>{period}</dd>
-              </>
+              <div className="meta-row">
+                <span className="meta-label">Zeitraum:</span>
+                <span className="meta-value">{period}</span>
+              </div>
             )}
-            <dt>{docType === "INVOICE" ? "Rechnungsnr.:" : "Angebotsnr.:"}</dt>
-            <dd>{docNumber}</dd>
+            <div className="meta-row">
+              <span className="meta-label">
+                {docType === "INVOICE" ? "Rechnungsnr.:" : "Angebotsnr.:"}
+              </span>
+              <span className="meta-value">{docNumber}</span>
+            </div>
             {paymentTerms && (
-              <>
-                <dt>{TERMS_LABEL[docType]}:</dt>
-                <dd>
-                  {docType === "QUOTE" ? formatDate(paymentTerms) : paymentTerms}
-                </dd>
-              </>
+              <div className="meta-row">
+                <span className="meta-label">{TERMS_LABEL[docType]}:</span>
+                <span className="meta-value">
+                  {docType === "QUOTE"
+                    ? formatDate(paymentTerms)
+                    : paymentTerms}
+                </span>
+              </div>
             )}
-          </dl>
+          </div>
         </div>
 
-        {/* Col 3 – Sender contact */}
         <div className="col-sender">
-          <strong>{sender.name}</strong>
-          <br />
-          {sender.street} {sender.houseNumber}
-          <br />
-          {sender.postalCode} {sender.city}
+          <div className="address-block address-block--right">
+            <span className="address-name">{sender.name}</span>
+            <span>
+              {sender.street} {sender.houseNumber}
+            </span>
+            <span>
+              {sender.postalCode} {sender.city}
+            </span>
+          </div>
 
-          <dl className="meta-list sender-meta">
-            {sender.phone && (
-              <>
-                <dt>Tel.:</dt>
-                <dd>{sender.phone}</dd>
-              </>
-            )}
+          <div className="contact-list">
+            {sender.phone && <ContactRow label="Tel.:" value={sender.phone} />}
             {sender.email && (
-              <>
-                <dt>E-Mail:</dt>
-                <dd>{sender.email}</dd>
-              </>
+              <ContactRow label="E-Mail:" value={sender.email} />
             )}
             {sender.website && (
-              <>
-                <dt>Web:</dt>
-                <dd>{sender.website}</dd>
-              </>
+              <ContactRow label="Web:" value={sender.website} />
             )}
-            <dt>Datum:</dt>
-            <dd>{formatDate(issueDate)}</dd>
-          </dl>
+            <ContactRow label="Datum:" value={formatDate(issueDate)} />
+          </div>
         </div>
       </div>
     </header>

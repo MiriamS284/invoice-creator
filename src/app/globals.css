@@ -480,9 +480,6 @@ body {
   align-items: start;
 }
 
-.col-doctype {
-}
-
 .doc-title {
   font-family: var(--font-display);
   font-size: 34px;
@@ -492,45 +489,86 @@ body {
   line-height: 1.1;
 }
 
-.col-recipient address {
-  font-style: normal;
+/* ── Address blocks ─────────────────────────── */
+.address-block {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
   font-size: 13px;
-  line-height: 1.6;
+  line-height: 1.7;
   margin-bottom: 14px;
   border-left: 2px solid var(--c-border);
   padding-left: 10px;
 }
 
+.address-block--right {
+  border-left: none;
+  border-right: 2px solid var(--c-border);
+  padding-left: 0;
+  padding-right: 10px;
+  align-items: flex-end;
+}
+
+.address-block span,
+.address-block--right span {
+  display: block;
+}
+
+.address-name {
+  font-weight: 600;
+}
+
+/* ── Meta list (recipient doc numbers) ──────── */
 .meta-list {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 2px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
   font-size: 12px;
 }
 
-.meta-list dt {
+.meta-row {
+  display: flex;
+  gap: 8px;
+}
+
+.meta-label {
+  color: var(--c-text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.meta-value {
+  color: var(--c-text);
+}
+
+/* ── Sender column (right-aligned) ─────────── */
+.col-sender {
+  text-align: right;
+  font-size: 12px;
+}
+
+/* ── Contact list (sender Tel/Email/Web/Datum) */
+.contact-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 12px;
+  align-items: flex-end;
+}
+
+.contact-row {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.contact-label {
   color: var(--c-text-muted);
   white-space: nowrap;
 }
 
-.col-sender {
-  text-align: right;
-  font-size: 12px;
-  line-height: 1.7;
-}
-
-.sender-meta {
-  margin-top: 10px;
-  text-align: right;
-  justify-content: flex-end;
-}
-
-.sender-meta dt {
-  order: 2;
-  color: var(--c-text-muted);
-}
-.sender-meta dd {
-  order: 1;
+.contact-value {
+  color: var(--c-text);
 }
 
 /* ── Invoice Table ──────────────────────────── */
@@ -653,6 +691,13 @@ body {
    PRINT STYLES
 ═══════════════════════════════════════════════ */
 @media print {
+  /* Force all colors & backgrounds to print */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Restore CSS variables for print context */
   :root {
     --c-bg: #ffffff;
     --c-surface: #ffffff;
@@ -666,18 +711,8 @@ body {
     display: none !important;
   }
 
-  .invoice-table thead tr {
-    background: #2a6ca8 !important;
-    color: #fff !important;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-
-  .accent-bar,
-  .footer-divider {
-    background: #2a6ca8 !important;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
+  .topbar {
+    display: none !important;
   }
 
   .page-root {
@@ -692,11 +727,13 @@ body {
 
   .preview-panel {
     overflow: visible;
+    background: #fff;
   }
 
   .preview-scroll {
     padding: 0;
     overflow: visible;
+    display: block;
   }
 
   .a4-sheet {
@@ -706,8 +743,43 @@ body {
     border-radius: 0;
   }
 
-  .topbar {
-    display: none;
+  /* Explicit colors for elements that must print colored */
+  .accent-bar {
+    background: #2a6ca8 !important;
+    height: 3px;
+  }
+
+  .footer-divider {
+    background: #2a6ca8 !important;
+    height: 2px;
+  }
+
+  .invoice-table thead tr {
+    background: #2a6ca8 !important;
+    color: #ffffff !important;
+  }
+
+  .invoice-table thead th {
+    color: #ffffff !important;
+  }
+
+  .brand-line {
+    color: #2a6ca8 !important;
+  }
+
+  /* Force 3-column header layout — prevent responsive breakpoint from collapsing it */
+  .header-grid {
+    display: grid !important;
+    grid-template-columns: 1fr 1.4fr 1.2fr !important;
+    gap: 24px !important;
+  }
+
+  .col-sender {
+    text-align: right !important;
+  }
+
+  .address-block--right {
+    align-items: flex-end !important;
   }
 
   @page {
