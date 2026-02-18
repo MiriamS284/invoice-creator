@@ -194,7 +194,7 @@ body {
 /* ── Main 2-col layout ──────────────────────── */
 .main-layout {
   display: grid;
-  grid-template-columns: 400px 1fr;
+  grid-template-columns: 1fr 1fr;
   flex: 1;
   overflow: hidden;
 }
@@ -904,6 +904,7 @@ body {
 
 .line-desc {
   grid-column: 1;
+  min-height: 96px;
 }
 .line-qty {
   grid-column: 3;

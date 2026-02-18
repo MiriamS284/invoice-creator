@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 import html2canvas from "html2canvas";
 import { InvoiceDocument } from "@/components/invoice";
 import { InvoiceData, LineItem, DocumentType } from "@/types/invoice";
